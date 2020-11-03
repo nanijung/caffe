@@ -1,0 +1,12 @@
+caffe\config\kafka\KafkaProcessor.class
+caffe\PayCanceled.class
+caffe\CoffeeServed.class
+caffe\MakeController.class
+caffe\MakeRepository.class
+caffe\Make.class
+caffe\PolicyHandler.class
+caffe\MakeCanceled.class
+caffe\MakecoffeeApplication.class
+caffe\AbstractEvent.class
+caffe\AbstractEvent$1.class
+caffe\Paid.class

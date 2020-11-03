@@ -1,0 +1,14 @@
+caffe\config\kafka\KafkaProcessor.class
+caffe\PayCanceled.class
+caffe\CoffeeServed.class
+caffe\Mypage.class
+caffe\OrderCanceled.class
+caffe\MypageApplication.class
+caffe\PolicyHandler.class
+caffe\MakeCanceled.class
+caffe\Ordered.class
+caffe\AbstractEvent.class
+caffe\AbstractEvent$1.class
+caffe\MypageRepository.class
+caffe\Paid.class
+caffe\MypageViewHandler.class

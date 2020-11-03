@@ -1,0 +1,12 @@
+caffe\config\kafka\KafkaProcessor.class
+caffe\OrderApplication.class
+caffe\OrderController.class
+caffe\Order.class
+caffe\OrderRepository.class
+caffe\OrderCanceled.class
+caffe\external\PaymentService.class
+caffe\PolicyHandler.class
+caffe\Ordered.class
+caffe\AbstractEvent.class
+caffe\external\Payment.class
+caffe\AbstractEvent$1.class
