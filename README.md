@@ -299,25 +299,28 @@ gateway 프로젝트 내 application.yml
 Circuite Breaker 는 시스템을 안정되게 운영할 수 있게 해줬지만, 사용자의 요청을 100% 받아들여주지 못했기 때문에 이에 대한 보완책으로 자동화된 확장 기능을 적용하고자 한다.
 
 * 결제서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 20프로를 넘어서면 replica 를 20개까지 늘려준다:
-
+```
 kubectl autoscale deploy payment --cpu-percent=15 --min=1 --max=10 -n project
-
+```
 * Circuite Breaker 에서 했던 방식대로 워크로드를 2분 동안 걸어준다.
+```
 siege -c100 -t120S -v --content-type "application/json" 'http://order:8080/orders POST {"menuId":1, "qty":1}'
-
+```
 * 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
+```
 kubectl get deploy payment -w
-
+```
 * 어느 정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다:
 ![image](https://user-images.githubusercontent.com/70181652/98245625-8b811900-1fb4-11eb-809d-493b1f3c8bf8.png)
 ![image](https://user-images.githubusercontent.com/70181652/98250054-57105b80-1fba-11eb-9a7f-3990669aafa3.png)
 
+* siege 의 로그를 보아도 전체적인 성공률이 높아진 것을 확인 할 수 있다.
 ![image](https://user-images.githubusercontent.com/70181652/98254645-e409e380-1fbf-11eb-96f2-d9337bc17b5f.png)
 
 
 ## Liveness Probe 점검
 
-###파일 상태 점검
+### 파일 상태 점검
 
 5초 간격으로 특정 위치의 파일 생성 여부를 확인하고, 없으면 실패로 인식해서 프로세스를 Kill하고 다시 시작, 일정 시간 (30초)가 지나면 다시 파일을 삭제하고 Liveness 를 위한 서비스 수행한다.
 
