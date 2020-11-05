@@ -244,3 +244,9 @@ http POST http://20.196.136.114:8080/orders menuId=5 qty=5 status="Ordered" #Suc
 http GET http://20.196.136.114:8080/mypages     # 주문상태 안바뀜 확인
 ![image](https://user-images.githubusercontent.com/70181652/98210562-1564be00-1f84-11eb-8aab-e334233bd42a.png)
 
+# 배송 서비스 기동
+kubectl scale deploy makecoffee --replicas=1 -n project
+
+# 주문상태 확인
+http GET http://20.196.136.114:8080/mypages     # 주문의 상태가 "CoffeeServed"으로 확인
+![image](https://user-images.githubusercontent.com/70181652/98210931-ad62a780-1f84-11eb-8d4c-8525a7780eab.png)
