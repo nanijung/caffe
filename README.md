@@ -172,8 +172,71 @@ kubectl scale deploy payment --replicas=1 -n project
 
 # 주문처리
 http POST http://20.196.136.114:8080/orders menuId=4 qty=4 status="Ordered" #Success
-http POST http://20.196.136.114:8080/orders menuId=4 qty=4 status="Ordered" #Success
 
 
 ![image](https://user-images.githubusercontent.com/70181652/98208310-6d99c100-1f80-11eb-8535-21256d6a0ca9.png)
   
+비동기식 호출 / 시간적 디커플링 / 장애격리 / 최종 (Eventual) 일관성 테스트
+결제가 이루어진 후에 배송서비스로 이를 알려주는 행위는 동기식이 아니라 비 동기식으로 처리하여 배송서비스의 처리를 위하여 결제주문이 블로킹 되지 않도록 처리한다.
+
+이를 위하여 결제이력에 기록을 남긴 후에 곧바로 결제승인이 되었다는 도메인 이벤트를 카프카로 송출한다(Publish)
+# Payment.java (Entity)
+
+@Entity
+@Table(name="Payment_table")
+public class Payment {
+
+    @Id
+    @GeneratedValue(strategy=GenerationType.AUTO)
+    private Long id;
+    private Long orderId;
+    private Long chargeAmount;
+    private String status;
+
+    @PostPersist
+    public void onPostPersist(){
+        Paid paid = new Paid();
+        BeanUtils.copyProperties(this, paid);
+        paid.publishAfterCommit();
+
+
+    }
+  서비스에서는 결제승인 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다:
+
+# (makecoffee) PolicyHandler.java
+
+package caffe;
+
+@Service
+public class PolicyHandler{
+    @StreamListener(KafkaProcessor.INPUT)
+    public void onStringEventListener(@Payload String eventString){
+
+    }
+
+    @Autowired
+    MakeRepository makeRepository;
+
+    @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverPaid_Make(@Payload Paid paid){
+
+        if(paid.isMe()){
+           // System.out.println("##### listener Make : " + paid.toJson());
+
+            Make make = new Make();
+            make.setOrderId(paid.getOrderId());
+            make.setStatus("CoffeeServed");
+
+            makeRepository.save(make);
+        }
+    }
+    
+제조 서비스는 주문/결제와 완전히 분리되어있으며, 이벤트 수신에 따라 처리되기 때문에, 제조 서비스가 유지보수로 인해 
+잠시 내려간 상태라도 주문을 받는데 문제가 없다:
+
+# 제조서비스 (makecoffee) 를 잠시 내려놓음 
+kubectl scale deploy makecoffee --replicas=0 -n project
+
+# 주문처리
+http POST http://20.196.136.114:8080/orders menuId=5 qty=5 status="Ordered" #Success
+
