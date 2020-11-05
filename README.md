@@ -53,7 +53,7 @@ cd customerview
 mvn spring-boot:run 
 ```
 ## DDD 의 적용
-각 서비스내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언하였다: (예시는 Order 마이크로 서비스)
+* 각 서비스내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언하였다: (예시는 Order 마이크로 서비스)
 ```java
 package caffe;
 
@@ -127,7 +127,7 @@ http GET http://20.196.136.114:8080/orders
 ```
 ![image](https://user-images.githubusercontent.com/70181652/98207135-8ef9ad80-1f7e-11eb-9fcc-a5f3bbefd930.png)
   
-** 동기식 호출 과 Fallback 처리
+## 동기식 호출 과 Fallback 처리
 주문(order)->결제(payment) 간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다.
 
 * 결제서비스를 호출하기 위하여 FeignClient 를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현
