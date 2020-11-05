@@ -22,12 +22,19 @@
 이벤트 도출
 
 ![image](https://user-images.githubusercontent.com/70181652/98206405-2d850f00-1f7d-11eb-8679-f6982dfb93d4.png)
-
+```
     - 도메인 서열 분리 
     - Core Domain:  Order : caffe 핵심 서비스이며, 연간 Up-time SLA 수준을 99.999% 목표, 배포 주기는 Order 의 경우 1주일 1회 미만
     - Supporting Domain:   make : 경쟁력을 내기 위한 서비스이며, SLA 수준은 연간 60% 이상 uptime 목표, 배포주기는 각 팀의 자율이나 표준 스프린트 주기가 1주일 이므로 1주일 1회 이상을 기준으로 함.
     - General Domain:   Payment : 결제서비스로 3rd Party 외부 서비스를 사용하는 것이 경쟁력이 높음
-    
+```
+## 헥사고날 아키텍처 다이어그램 도출
+![image](https://user-images.githubusercontent.com/70181652/98258229-f6861c00-1fc3-11eb-891f-49f27a22204d.png)
+```
+- 이벤트 흐름에서 Inbound adaptor와 Outbound adaptor를 구분함
+- 호출 관계에서 Pub/Sub 과 Req/Resp 를 구분함
+- 바운디드 컨텍스트에 서브 도메인을 1 대 1 모델링하고 팀원별 관심 구현 스토리를 나눠가짐
+```
     
 # 구현:
 * 분석/설계 단계에서 도출된 헥사고날 아키텍처에 따라, 각 Bounded Context 별로 대변되는 마이크로 서비스들을 Spring Boot 로 구현하였다. 
