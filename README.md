@@ -282,3 +282,5 @@ Circuit Breaker 점검
 ![image](https://user-images.githubusercontent.com/70181652/98214624-126ccc00-1f8a-11eb-9f35-b8221e877578.png)
 
 ![image](https://user-images.githubusercontent.com/70181652/98214684-26183280-1f8a-11eb-9707-d3de8efc4c23.png)
+
+-운영시스템은 죽지 않고 지속적으로 CB 에 의하여 적절히 회로가 열림과 닫힘이 벌어지면서 자원을 보호하고 있음을 보여줌. 72% 가 성공하였고, 고객 사용성에 있어 좋지 않기 때문에 28%를 커버하기위하여 Retry 설정과 동적 Scale out (replica의 자동적 추가,HPA) 을 통하여 시스템을 확장 해주는 후속처리가 필요.
