@@ -22,12 +22,23 @@
 분석/설계
 Event Storming 결과
 MSAEz 로 모델링한 이벤트스토밍 결과:
+헥사고날 아키텍처 다이어그램 도출:
+
+적용 후 REST API 의 테스트
+# 주문 서비스의 접수처리
+http POST http://20.196.145.178:8080/orders menuId=1 qty=1 status="Ordered"
+
+# 주문 서비스의 접수상태확인
+http http://20.196.145.178:8080/orders/1
+
+# 제작 서비스의 배달처리
+http put http://localhost:8083/deliveries/1 courierName="Lee" memberId=10 requestId=2 location="Ulsan City" status="Picked"
 
 동기식 호출 과 Fallback 처리
-분석단계에서의 조건 중 하나로 주문(app)->결제(pay) 간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다.
+분석단계에서의 조건 중 하나로 주문->결제간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다.
 
 결제서비스를 호출하기 위하여 FeignClient 를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현
-# (app) 결제이력Service.java
+# PaymentService.java
 
 @FeignClient(name="payment", url="${api.payment.url}")
 public interface PaymentService {
@@ -55,6 +66,11 @@ public interface PaymentService {
             .pay(payment);
     }
 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제 시스템이 장애가 나면 주문도 못받는다는 것을 확인:
+동기식 호출 / 서킷 브레이킹 / 장애격리
+서킷 브레이킹 프레임워크의 선택: Spring FeignClient + Hystrix 옵션을 사용하여 구현함
+시나리오는 접수(request)-->결제(payment) 시의 연결을 RESTful Request/Response 로 연동하여 구현이 되어있고, 결제 요청이 과도할 경우 CB 를 통하여 장애격리.
+
+Hystrix 를 설정: 요청처리 쓰레드에서 처리시간이 680 밀리가 넘어서기 시작하여 어느정도 유지되면 CB 회로가 닫히도록 (요청을 빠르게 실패처리, 차단) 설정
 # 결제 (payment) 서비스를 잠시 내려놓음 
 kubectl scale deploy payment --replicas=0 -n project
 
