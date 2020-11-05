@@ -250,3 +250,8 @@ kubectl scale deploy makecoffee --replicas=1 -n project
 # 주문상태 확인
 http GET http://20.196.136.114:8080/mypages     # 주문의 상태가 "CoffeeServed"으로 확인
 ![image](https://user-images.githubusercontent.com/70181652/98210931-ad62a780-1f84-11eb-8d4c-8525a7780eab.png)
+
+CQRS
+mypage를 통해 구현하였다.
+
+![image](https://user-images.githubusercontent.com/70181652/98211172-ff0b3200-1f84-11eb-9cb4-d41345b1b76c.png)
