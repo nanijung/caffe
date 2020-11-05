@@ -303,6 +303,8 @@ kubectl get deploy payment -w
 ![image](https://user-images.githubusercontent.com/70181652/98245625-8b811900-1fb4-11eb-809d-493b1f3c8bf8.png)
 ![image](https://user-images.githubusercontent.com/70181652/98250054-57105b80-1fba-11eb-9a7f-3990669aafa3.png)
 
+![image](https://user-images.githubusercontent.com/70181652/98254645-e409e380-1fbf-11eb-96f2-d9337bc17b5f.png)
+
 
 Liveness Probe 점검
 파일 상태 점검
