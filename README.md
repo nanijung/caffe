@@ -129,4 +129,51 @@ http PATCH http://20.196.136.114:8080/orders/2 status="OrderCanceled"
 http GET http://20.196.136.114:8080/orders
 ![image](https://user-images.githubusercontent.com/70181652/98207135-8ef9ad80-1f7e-11eb-9fcc-a5f3bbefd930.png)
   
+동기식 호출 과 Fallback 처리
+주문(order)->결제(payment) 간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다.
+
+결제서비스를 호출하기 위하여 FeignClient 를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현
+
+# (Order) PaymentService.java
+
+@FeignClient(name="payment", url="${api.payment.url}")
+public interface PaymentService {
+
+    @RequestMapping(method= RequestMethod.POST, path="/payments")
+    public void pay(@RequestBody Payment payment);
+
+주문을 받은 직후(@PostPersist) 결제를 요청하도록 처리
+# Order.java (Entity)
+    @PostPersist
+    public void onPostPersist(){
+        Ordered ordered = new Ordered();
+        BeanUtils.copyProperties(this, ordered);
+        ordered.publishAfterCommit();
+
+        caffe.external.Payment payment = new caffe.external.Payment();
+ 
+        payment.setOrderId(ordered.getId());
+        payment.setChargeAmount(ordered.getQty()*100);
+        payment.setStatus("Paid");
+
+        OrderApplication.applicationContext.getBean(caffe.external.PaymentService.class)
+            .pay(payment);
+    }
+동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제 시스템이 장애가 나면 주문도 못받는다는 것을 확인 
+# 결제 (Payment) 서비스를 잠시 내려놓음 
+kubectl scale deploy payment --replicas=0 -n project
+
+# 주문처리
+http POST http://20.196.136.114:8080/orders menuId=4 qty=4 status="Ordered"   #Fail
+![image](https://user-images.githubusercontent.com/70181652/98208140-26133500-1f80-11eb-9550-5f2e00b85a43.png)
+  
+# 결제서비스 재기동
+kubectl scale deploy payment --replicas=1 -n project
+
+# 주문처리
+http POST http://20.196.136.114:8080/orders menuId=4 qty=4 status="Ordered" #Success
+http POST http://20.196.136.114:8080/orders menuId=4 qty=4 status="Ordered" #Success
+
+
+![image](https://user-images.githubusercontent.com/70181652/98208310-6d99c100-1f80-11eb-8535-21256d6a0ca9.png)
   
