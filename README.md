@@ -284,3 +284,19 @@ Circuit Breaker 점검
 ![image](https://user-images.githubusercontent.com/70181652/98214684-26183280-1f8a-11eb-9707-d3de8efc4c23.png)
 
 -운영시스템은 죽지 않고 지속적으로 CB 에 의하여 적절히 회로가 열림과 닫힘이 벌어지면서 자원을 보호하고 있음을 보여줌. 72% 가 성공하였고, 고객 사용성에 있어 좋지 않기 때문에 28%를 커버하기위하여 Retry 설정과 동적 Scale out (replica의 자동적 추가,HPA) 을 통하여 시스템을 확장 해주는 후속처리가 필요.
+
+
+오토스케일 아웃
+Circuite Breaker 는 시스템을 안정되게 운영할 수 있게 해줬지만, 사용자의 요청을 100% 받아들여주지 못했기 때문에 이에 대한 보완책으로 자동화된 확장 기능을 적용하고자 한다.
+
+결제서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 20프로를 넘어서면 replica 를 20개까지 늘려준다:
+
+kubectl autoscale deploy payment --cpu-percent=20 --min=1 --max=20 -n project
+
+Circuite Breaker 에서 했던 방식대로 워크로드를 2분 동안 걸어준다.
+siege -c100 -t120S -v --content-type "application/json" 'http://order:8080/orders POST {"menuId":1, "qty":1}'
+
+오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
+kubectl get deploy payment -w
+
+어느 정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다:
