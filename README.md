@@ -45,7 +45,7 @@ mvn spring-boot:run
 cd customerview
 mvn spring-boot:run 
 ```
-# DDD 의 적용
+## DDD 의 적용
 각 서비스내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언하였다: (예시는 Order 마이크로 서비스)
 ```java
 package caffe;
@@ -101,24 +101,30 @@ public class Order {
 }
 ```
 
-적용 후 REST API 의 테스트
+* 적용 후 REST API 의 테스트
+```
 # Order 서비스의 주문처리
 http POST http://20.196.136.114:8080/orders menuId=1 qty=1 status="Ordered"
+```
 ![image](https://user-images.githubusercontent.com/70181652/98207012-5528a700-1f7e-11eb-94c1-eb93bf466c37.png)
 
+```
 # Order 서비스의 취소처리
 http PATCH http://20.196.136.114:8080/orders/2 status="OrderCanceled"
+```
 ![image](https://user-images.githubusercontent.com/70181652/98207089-77bac000-1f7e-11eb-9f70-478f6d88308a.png)
   
+```
 # Order 서비스의 주문 상태 확인
 http GET http://20.196.136.114:8080/orders
+```
 ![image](https://user-images.githubusercontent.com/70181652/98207135-8ef9ad80-1f7e-11eb-9fcc-a5f3bbefd930.png)
   
-동기식 호출 과 Fallback 처리
+** 동기식 호출 과 Fallback 처리
 주문(order)->결제(payment) 간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다.
 
-결제서비스를 호출하기 위하여 FeignClient 를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현
-
+* 결제서비스를 호출하기 위하여 FeignClient 를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현
+```
 # (Order) PaymentService.java
 
 @FeignClient(name="payment", url="${api.payment.url}")
@@ -126,8 +132,9 @@ public interface PaymentService {
 
     @RequestMapping(method= RequestMethod.POST, path="/payments")
     public void pay(@RequestBody Payment payment);
-
-주문을 받은 직후(@PostPersist) 결제를 요청하도록 처리
+```
+* 주문을 받은 직후(@PostPersist) 결제를 요청하도록 처리
+```
 # Order.java (Entity)
     @PostPersist
     public void onPostPersist(){
@@ -144,24 +151,29 @@ public interface PaymentService {
         OrderApplication.applicationContext.getBean(caffe.external.PaymentService.class)
             .pay(payment);
     }
-동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제 시스템이 장애가 나면 주문도 못받는다는 것을 확인 
+ ```
+* 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제 시스템이 장애가 나면 주문도 못받는다는 것을 확인 
+```
 # 결제 (Payment) 서비스를 잠시 내려놓음 
 kubectl scale deploy payment --replicas=0 -n project
-
+```
+```
 # 주문처리
 http POST http://20.196.136.114:8080/orders menuId=4 qty=4 status="Ordered"   #Fail
+```
 ![image](https://user-images.githubusercontent.com/70181652/98208140-26133500-1f80-11eb-9550-5f2e00b85a43.png)
-  
+```  
 # 결제서비스 재기동
 kubectl scale deploy payment --replicas=1 -n project
-
+```
+```
 # 주문처리
 http POST http://20.196.136.114:8080/orders menuId=4 qty=4 status="Ordered" #Success
-
+```
 
 ![image](https://user-images.githubusercontent.com/70181652/98208310-6d99c100-1f80-11eb-8535-21256d6a0ca9.png)
   
-비동기식 호출 / 시간적 디커플링 / 장애격리 / 최종 (Eventual) 일관성 테스트
+## 비동기식 호출 / 시간적 디커플링 / 장애격리 / 최종 (Eventual) 일관성 테스트
 결제가 이루어진 후에 배송서비스로 이를 알려주는 행위는 동기식이 아니라 비 동기식으로 처리하여 배송서비스의 처리를 위하여 결제주문이 블로킹 되지 않도록 처리한다.
 
 이를 위하여 결제이력에 기록을 남긴 후에 곧바로 결제승인이 되었다는 도메인 이벤트를 카프카로 송출한다(Publish)
