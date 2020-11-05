@@ -301,7 +301,7 @@ kubectl get deploy payment -w
 
 어느 정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다:
 ![image](https://user-images.githubusercontent.com/70181652/98245625-8b811900-1fb4-11eb-809d-493b1f3c8bf8.png)
-![image](https://user-images.githubusercontent.com/70181652/98245679-a5226080-1fb4-11eb-89b0-2f01aec91f6b.png)
+![image](https://user-images.githubusercontent.com/70181652/98248075-cafd3480-1fb7-11eb-968a-93533246aab8.png)
 
 
 Liveness Probe 점검
