@@ -38,4 +38,95 @@ Config Map
 Event Storming 결과
 MSAEz 로 모델링한 이벤트스토밍 결과: http://www.msaez.io/#/storming/QDfI806oeNaYRhJgglhwzluA0kf2/mine/c3f08b5731b9a89afa6c3c110b0e4a12/-MLDcTKVYfbZc5OksFOf
 이벤트 도출
+
 ![image](https://user-images.githubusercontent.com/70181652/98206405-2d850f00-1f7d-11eb-8679-f6982dfb93d4.png)
+
+- 도메인 서열 분리 
+    - Core Domain:  Order : caffe 핵심 서비스이며, 연간 Up-time SLA 수준을 99.999% 목표, 배포 주기는 Order 의 경우 1주일 1회 미만
+    - Supporting Domain:   make : 경쟁력을 내기 위한 서비스이며, SLA 수준은 연간 60% 이상 uptime 목표, 배포주기는 각 팀의 자율이나 표준 스프린트 주기가 1주일 이므로 1주일 1회 이상을 기준으로 함.
+    - General Domain:   Payment : 결제서비스로 3rd Party 외부 서비스를 사용하는 것이 경쟁력이 높음
+    
+    
+    구현:
+분석/설계 단계에서 도출된 헥사고날 아키텍처에 따라, 각 Bounded Context 별로 대변되는 마이크로 서비스들을 Spring Boot 로 구현하였다. 구현한 각 서비스를 로컬에서 실행하는 방법은 아래와 같다. (포트 넘버는 8081 ~ 8084 이다)
+
+cd Order
+mvn spring-boot:run
+
+cd Payment
+mvn spring-boot:run 
+
+cd Delivery
+mvn spring-boot:run  
+
+cd customerview
+mvn spring-boot:run 
+
+DDD 의 적용
+각 서비스내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언하였다: (예시는 Order 마이크로 서비스)
+package caffe;
+
+import javax.persistence.*;
+
+import caffe.external.Payment;
+import org.springframework.beans.BeanUtils;
+import java.util.List;
+
+@Entity
+@Table(name="Order_table")
+public class Order {
+
+    @Id
+    @GeneratedValue(strategy=GenerationType.AUTO)
+    private Long id;
+    private Long menuId;
+    private Long qty;
+    private String status;
+
+    @PostUpdate
+    public void onPostUpdate(){
+        OrderCanceled orderCanceled = new OrderCanceled();
+        BeanUtils.copyProperties(this, orderCanceled);
+        orderCanceled.publishAfterCommit();
+    }
+
+    @PostPersist
+    public void onPostPersist(){
+        Ordered ordered = new Ordered();
+        BeanUtils.copyProperties(this, ordered);
+        ordered.publishAfterCommit();
+
+        caffe.external.Payment payment = new caffe.external.Payment();
+        // mappings goes here
+        payment.setOrderId(ordered.getId());
+        payment.setChargeAmount(ordered.getQty()*100);
+        payment.setStatus("Paid");
+
+        OrderApplication.applicationContext.getBean(caffe.external.PaymentService.class)
+            .pay(payment);
+    }
+    @PrePersist
+    public void onPrePersist(){
+        try {
+            Thread.currentThread().sleep((long) (800 + Math.random() * 220));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+    // getter(), setter() 중략
+}
+
+적용 후 REST API 의 테스트
+# Order 서비스의 주문처리
+http POST http://20.196.136.114:8080/orders menuId=1 qty=1 status="Ordered"
+![image](https://user-images.githubusercontent.com/70181652/98207012-5528a700-1f7e-11eb-94c1-eb93bf466c37.png)
+
+# Order 서비스의 취소처리
+http PATCH http://20.196.136.114:8080/orders/2 status="OrderCanceled"
+![image](https://user-images.githubusercontent.com/70181652/98207089-77bac000-1f7e-11eb-9f70-478f6d88308a.png)
+  
+# Order 서비스의 주문 상태 확인
+http GET http://20.196.136.114:8080/orders
+![image](https://user-images.githubusercontent.com/70181652/98207135-8ef9ad80-1f7e-11eb-9fcc-a5f3bbefd930.png)
+  
+  
