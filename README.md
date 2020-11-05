@@ -176,7 +176,8 @@ http POST http://20.196.136.114:8080/orders menuId=4 qty=4 status="Ordered" #Suc
 ## 비동기식 호출 / 시간적 디커플링 / 장애격리 / 최종 (Eventual) 일관성 테스트
 결제가 이루어진 후에 배송서비스로 이를 알려주는 행위는 동기식이 아니라 비 동기식으로 처리하여 배송서비스의 처리를 위하여 결제주문이 블로킹 되지 않도록 처리한다.
 
-이를 위하여 결제이력에 기록을 남긴 후에 곧바로 결제승인이 되었다는 도메인 이벤트를 카프카로 송출한다(Publish)
+* 이를 위하여 결제이력에 기록을 남긴 후에 곧바로 결제승인이 되었다는 도메인 이벤트를 카프카로 송출한다(Publish)
+```java
 # Payment.java (Entity)
 
 @Entity
@@ -198,8 +199,9 @@ public class Payment {
 
 
     }
-  서비스에서는 결제승인 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다:
-
+  ```
+  * 제조서비스에서는 결제승인 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다:
+```java
 # (makecoffee) PolicyHandler.java
 
 package caffe;
@@ -227,7 +229,7 @@ public class PolicyHandler{
             makeRepository.save(make);
         }
     }
-    
+
 제조 서비스는 주문/결제와 완전히 분리되어있으며, 이벤트 수신에 따라 처리되기 때문에, 제조 서비스가 유지보수로 인해 
 잠시 내려간 상태라도 주문을 받는데 문제가 없다:
 
@@ -239,21 +241,24 @@ http POST http://20.196.136.114:8080/orders menuId=5 qty=5 status="Ordered" #Suc
 
 # 주문상태 확인
 http GET http://20.196.136.114:8080/mypages     # 주문상태 안바뀜 확인
+```
 ![image](https://user-images.githubusercontent.com/70181652/98210562-1564be00-1f84-11eb-8aab-e334233bd42a.png)
 
+```
 # 제조서비스 기동
 kubectl scale deploy makecoffee --replicas=1 -n project
 
 # 주문상태 확인
 http GET http://20.196.136.114:8080/mypages     # 주문의 상태가 "CoffeeServed"으로 확인
+```
 ![image](https://user-images.githubusercontent.com/70181652/98210931-ad62a780-1f84-11eb-8d4c-8525a7780eab.png)
 
-CQRS
+## CQRS
 mypage를 통해 구현하였다.
 
 ![image](https://user-images.githubusercontent.com/70181652/98211172-ff0b3200-1f84-11eb-9cb4-d41345b1b76c.png)
 
-gateway
+## gateway
 gateway 프로젝트 내 application.yml
 
 ![image](https://user-images.githubusercontent.com/70181652/98211494-7a6ce380-1f85-11eb-9950-28638fcf9868.png)
@@ -261,10 +266,10 @@ gateway 프로젝트 내 application.yml
 
 ![image](https://user-images.githubusercontent.com/70181652/98211694-c28c0600-1f85-11eb-8959-9003cc98402e.png)
 
-운영
+# 운영
 
-Circuit Breaker 점검
-
+## Circuit Breaker 점검
+```
 호출 서비스(주문:order) 임의 부하 처리 - 800 밀리에서 증감 220 밀리 정도 왔다 갔다 하게
 # Order.java (Entity)
 
@@ -275,39 +280,42 @@ Circuit Breaker 점검
             e.printStackTrace();
         }
     }
- 부하 발생을 통한 Circuit Breaker 점검
+ ```
+ ## 부하 발생을 통한 Circuit Breaker 점검
 ![image](https://user-images.githubusercontent.com/70181652/98214624-126ccc00-1f8a-11eb-9f35-b8221e877578.png)
 
 ![image](https://user-images.githubusercontent.com/70181652/98214684-26183280-1f8a-11eb-9707-d3de8efc4c23.png)
 
--운영시스템은 죽지 않고 지속적으로 CB 에 의하여 적절히 회로가 열림과 닫힘이 벌어지면서 자원을 보호하고 있음을 보여줌. 72% 가 성공하였고, 고객 사용성에 있어 좋지 않기 때문에 28%를 커버하기위하여 Retry 설정과 동적 Scale out (replica의 자동적 추가,HPA) 을 통하여 시스템을 확장 해주는 후속처리가 필요.
 
 
-오토스케일 아웃
+## 오토스케일 아웃
 Circuite Breaker 는 시스템을 안정되게 운영할 수 있게 해줬지만, 사용자의 요청을 100% 받아들여주지 못했기 때문에 이에 대한 보완책으로 자동화된 확장 기능을 적용하고자 한다.
 
-결제서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 20프로를 넘어서면 replica 를 20개까지 늘려준다:
+* 결제서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 20프로를 넘어서면 replica 를 20개까지 늘려준다:
 
 kubectl autoscale deploy payment --cpu-percent=15 --min=1 --max=10 -n project
 
-Circuite Breaker 에서 했던 방식대로 워크로드를 2분 동안 걸어준다.
+* Circuite Breaker 에서 했던 방식대로 워크로드를 2분 동안 걸어준다.
 siege -c100 -t120S -v --content-type "application/json" 'http://order:8080/orders POST {"menuId":1, "qty":1}'
 
-오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
+* 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
 kubectl get deploy payment -w
 
-어느 정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다:
+* 어느 정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다:
 ![image](https://user-images.githubusercontent.com/70181652/98245625-8b811900-1fb4-11eb-809d-493b1f3c8bf8.png)
 ![image](https://user-images.githubusercontent.com/70181652/98250054-57105b80-1fba-11eb-9a7f-3990669aafa3.png)
 
 ![image](https://user-images.githubusercontent.com/70181652/98254645-e409e380-1fbf-11eb-96f2-d9337bc17b5f.png)
 
 
-Liveness Probe 점검
-파일 상태 점검
+## Liveness Probe 점검
+
+###파일 상태 점검
+
 5초 간격으로 특정 위치의 파일 생성 여부를 확인하고, 없으면 실패로 인식해서 프로세스를 Kill하고 다시 시작, 일정 시간 (30초)가 지나면 다시 파일을 삭제하고 Liveness 를 위한 서비스 수행한다.
 
-설정 확인
+### 설정 확인
+```
 apiVersion: v1
 kind: Pod
 metadata:
@@ -330,10 +338,14 @@ spec:
         - /tmp/healthy
       initialDelaySeconds: 5
       periodSeconds: 5
-
+```
 liveness 적용된 pod 생성
+```
 kubectl create -f exec-liveness.yaml
+```
 liveness 적용된 order pod 의 상태 체크( 테스트 결과 )
+```
 kubectl describe po order -n project
+```
 ![image](https://user-images.githubusercontent.com/70181652/98242909-7d30fe00-1fb0-11eb-8229-3f6a37373b3b.png)
 
