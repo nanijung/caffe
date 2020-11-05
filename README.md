@@ -258,6 +258,7 @@ mypage를 통해 구현하였다.
 
 gateway
 gateway 프로젝트 내 application.yml
+
 ![image](https://user-images.githubusercontent.com/70181652/98211494-7a6ce380-1f85-11eb-9950-28638fcf9868.png)
 ![image](https://user-images.githubusercontent.com/70181652/98211558-8e184a00-1f85-11eb-9909-1109480dbbae.png)
 
