@@ -244,7 +244,7 @@ http POST http://20.196.136.114:8080/orders menuId=5 qty=5 status="Ordered" #Suc
 http GET http://20.196.136.114:8080/mypages     # 주문상태 안바뀜 확인
 ![image](https://user-images.githubusercontent.com/70181652/98210562-1564be00-1f84-11eb-8aab-e334233bd42a.png)
 
-# 배송 서비스 기동
+# 제조서비스 기동
 kubectl scale deploy makecoffee --replicas=1 -n project
 
 # 주문상태 확인
@@ -255,3 +255,11 @@ CQRS
 mypage를 통해 구현하였다.
 
 ![image](https://user-images.githubusercontent.com/70181652/98211172-ff0b3200-1f84-11eb-9cb4-d41345b1b76c.png)
+
+gateway
+gateway 프로젝트 내 application.yml
+![image](https://user-images.githubusercontent.com/70181652/98211494-7a6ce380-1f85-11eb-9950-28638fcf9868.png)
+![image](https://user-images.githubusercontent.com/70181652/98211558-8e184a00-1f85-11eb-9909-1109480dbbae.png)
+
+![image](https://user-images.githubusercontent.com/70181652/98211694-c28c0600-1f85-11eb-8959-9003cc98402e.png)
+
