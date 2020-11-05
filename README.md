@@ -300,3 +300,39 @@ siege -c100 -t120S -v --content-type "application/json" 'http://order:8080/order
 kubectl get deploy payment -w
 
 어느 정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다:
+
+
+Liveness Probe 점검
+파일 상태 점검
+5초 간격으로 특정 위치의 파일 생성 여부를 확인하고, 없으면 실패로 인식해서 프로세스를 Kill하고 다시 시작, 일정 시간 (30초)가 지나면 다시 파일을 삭제하고 Liveness 를 위한 서비스 수행한다.
+
+설정 확인
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    test: orderLiveness
+  name: order
+  namespace: project
+spec:
+  containers:
+  - name: order
+    image: nanijung.azurecr.io/order:v1
+    args:
+    - /bin/sh
+    - -c
+    - touch /tmp/healthy; sleep 30; rm -rf /tmp/healthy; sleep 600
+    livenessProbe:
+      exec:
+        command:
+        - cat
+        - /tmp/healthy
+      initialDelaySeconds: 5
+      periodSeconds: 5
+
+liveness 적용된 pod 생성
+kubectl create -f exec-liveness.yaml
+liveness 적용된 order pod 의 상태 체크( 테스트 결과 )
+kubectl describe po order -n project
+![image](https://user-images.githubusercontent.com/70181652/98242909-7d30fe00-1fb0-11eb-8229-3f6a37373b3b.png)
+
