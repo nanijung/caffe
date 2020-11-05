@@ -23,15 +23,16 @@
 
 ![image](https://user-images.githubusercontent.com/70181652/98206405-2d850f00-1f7d-11eb-8679-f6982dfb93d4.png)
 
-- 도메인 서열 분리 
+    - 도메인 서열 분리 
     - Core Domain:  Order : caffe 핵심 서비스이며, 연간 Up-time SLA 수준을 99.999% 목표, 배포 주기는 Order 의 경우 1주일 1회 미만
     - Supporting Domain:   make : 경쟁력을 내기 위한 서비스이며, SLA 수준은 연간 60% 이상 uptime 목표, 배포주기는 각 팀의 자율이나 표준 스프린트 주기가 1주일 이므로 1주일 1회 이상을 기준으로 함.
     - General Domain:   Payment : 결제서비스로 3rd Party 외부 서비스를 사용하는 것이 경쟁력이 높음
     
     
-    구현:
-분석/설계 단계에서 도출된 헥사고날 아키텍처에 따라, 각 Bounded Context 별로 대변되는 마이크로 서비스들을 Spring Boot 로 구현하였다. 구현한 각 서비스를 로컬에서 실행하는 방법은 아래와 같다. (포트 넘버는 8081 ~ 8084 이다)
-
+# 구현:
+* 분석/설계 단계에서 도출된 헥사고날 아키텍처에 따라, 각 Bounded Context 별로 대변되는 마이크로 서비스들을 Spring Boot 로 구현하였다. 
+구현한 각 서비스를 로컬에서 실행하는 방법은 아래와 같다. (포트 넘버는 8081 ~ 8084 이다)
+```
 cd Order
 mvn spring-boot:run
 
@@ -43,9 +44,10 @@ mvn spring-boot:run
 
 cd customerview
 mvn spring-boot:run 
-
-DDD 의 적용
+```
+# DDD 의 적용
 각 서비스내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언하였다: (예시는 Order 마이크로 서비스)
+```java
 package caffe;
 
 import javax.persistence.*;
@@ -97,6 +99,7 @@ public class Order {
     }
     // getter(), setter() 중략
 }
+```
 
 적용 후 REST API 의 테스트
 # Order 서비스의 주문처리
