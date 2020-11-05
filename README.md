@@ -317,6 +317,31 @@ kubectl get deploy payment -w
 * siege 의 로그를 보아도 전체적인 성공률이 높아진 것을 확인 할 수 있다.
 ![image](https://user-images.githubusercontent.com/70181652/98254645-e409e380-1fbf-11eb-96f2-d9337bc17b5f.png)
 
+## 무정지 재배포
+* 먼저 무정지 재배포가 100% 되는 것인지 확인하기 위해서 Autoscaler 이나 CB 설정을 제거함
+* seige 로 배포작업 직전에 워크로드를 모니터링 함.
+```
+siege -c100 -t120S -r10 --content-type "application/json" 'http://request:8080/requests POST {"memberId": "100", "qty":5}'
+```
+
+* 새버전으로의 배포 시작
+kubectl set image ...
+* seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
+
+배포기간중 Availability 가 평소 100%에서 90% 로 떨어지는 것을 확인. 원인은 쿠버네티스가 성급하게 새로 올려진 서비스를 READY 상태로 인식하여 서비스 유입을 진행한 것이기 때문. 이를 막기위해 Readiness Probe 를 설정함:
+```
+# deployment.yaml 의 readiness probe 의 설정 
+  initialDelaySeconds: 10
+  timeoutSeconds: 2
+  periodSeconds: 5
+  failureThreshold: 10
+
+kubectl apply -f kubernetes/deployment.yaml
+```
+* 동일한 시나리오로 재배포 한 후 Availability 확인:
+
+배포기간 동안 Availability 가 변화없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
+
 
 ## Liveness Probe 점검
 
