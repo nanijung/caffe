@@ -264,3 +264,21 @@ gateway 프로젝트 내 application.yml
 
 ![image](https://user-images.githubusercontent.com/70181652/98211694-c28c0600-1f85-11eb-8959-9003cc98402e.png)
 
+운영
+
+Circuit Breaker 점검
+
+호출 서비스(주문:order) 임의 부하 처리 - 800 밀리에서 증감 220 밀리 정도 왔다 갔다 하게
+# Order.java (Entity)
+
+    public void onPrePersist(){
+        try {
+            Thread.currentThread().sleep((long) (800 + Math.random() * 220));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+ 부하 발생을 통한 Circuit Breaker 점검
+![image](https://user-images.githubusercontent.com/70181652/98214624-126ccc00-1f8a-11eb-9f35-b8221e877578.png)
+
+![image](https://user-images.githubusercontent.com/70181652/98214684-26183280-1f8a-11eb-9707-d3de8efc4c23.png)
