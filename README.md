@@ -392,18 +392,19 @@ Order 서비스에 configmap.yml 파일을 생성한다.
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: apipayurl
+  name: apiurl
 data:
-  url:  http://payment:8080
+  url: http://payment:8080
+  fluented-sever-ip: 10.xxx.xxx.xxx
 ```
 ```
 Order 서버스의 deployment.yml에 configmap 파일을 참조할 수 있는 값을 추가한다.
 
           env:
-            - name: payurl
+            - name: configurl
               valueFrom:
                 configMapKeyRef:
-                  name: apipayurl
+                  name: apiurl
                   key: url
 ```
 ```
@@ -411,7 +412,7 @@ Order 서버스의 apllication.yml에 deployment에 추가된 값을 참조하�
 
 api:
   payment:
-    url: ${payurl}
+    url: ${configurl}
 ```
 ```
 Order 서버스의 PaymentService.java에 외부 값을 보도록 변경한다.
