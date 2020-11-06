@@ -29,7 +29,7 @@
     - General Domain:   Payment : 결제서비스로 3rd Party 외부 서비스를 사용하는 것이 경쟁력이 높음
 ```
 ## 헥사고날 아키텍처 다이어그램 도출
-![image](https://user-images.githubusercontent.com/70181652/98258229-f6861c00-1fc3-11eb-891f-49f27a22204d.png)
+![image](https://user-images.githubusercontent.com/70181652/98321806-54008400-2029-11eb-8a3e-d41f6fb16cff.png)
 ```
 - 이벤트 흐름에서 Inbound adaptor와 Outbound adaptor를 구분함
 - 호출 관계에서 Pub/Sub 과 Req/Resp 를 구분함
@@ -408,8 +408,9 @@ public interface PaymentService {
 ```
 ```
 order 서비스의 호출 시 에러발생.
+```
 ![image](https://user-images.githubusercontent.com/70181652/98321460-7645d200-2028-11eb-835b-e8b1f38324a1.png)
 
-```
+
 
 
