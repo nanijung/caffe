@@ -126,6 +126,13 @@ http PATCH http://20.196.136.114:8080/orders/2 status="OrderCanceled"
 http GET http://20.196.136.114:8080/orders
 ```
 ![image](https://user-images.githubusercontent.com/70181652/98207135-8ef9ad80-1f7e-11eb-9fcc-a5f3bbefd930.png)
+
+## 폴리글랏 퍼시스턴스
+제조서비스에는 H2 DB 대신 HSQLDB를 사용하기로 하였다. 이를 위해 메이븐 설정(pom.xml)상 DB 정보를 HSQLDB를 사용하도록 변경하였다.
+
+![image](https://user-images.githubusercontent.com/70181652/98315844-7dff7980-201c-11eb-9e0c-32be634a591f.png)
+
+![image](https://user-images.githubusercontent.com/70181652/98315720-3678ed80-201c-11eb-8743-791a76ec7fcc.png)
   
 ## 동기식 호출 과 Fallback 처리
 주문(order)->결제(payment) 간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다.
